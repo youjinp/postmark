@@ -1,5 +1,7 @@
 package postmark
 
+import "errors"
+
 // EmailWithTemplate is used to send an email via a template
 type EmailWithTemplate struct {
 	// TemplateId: REQUIRED if TemplateAlias is not specified. - The template id to use when sending this message.
@@ -31,8 +33,13 @@ type EmailWithTemplate struct {
 }
 
 // SendEmailWithTemplate sends an email using a template (TemplateId)
-func (client *Client) SendEmailWithTemplate(email EmailWithTemplate) (EmailResponse, error) {
-	res := EmailResponse{}
+func (client *Client) SendEmailWithTemplate(email *EmailWithTemplate) (*EmailResponse, error) {
+	res := &EmailResponse{}
+
+	if email == nil {
+		return res, errors.New("The email object is not set")
+	}
+
 	err := client.doRequest(parameters{
 		Method:    "POST",
 		Path:      "email/withTemplate",
@@ -43,8 +50,13 @@ func (client *Client) SendEmailWithTemplate(email EmailWithTemplate) (EmailRespo
 }
 
 // SendBatchEmailWithTemplate sends batch email using a template (TemplateId)
-func (client *Client) SendBatchEmailWithTemplate(emails []EmailWithTemplate) ([]EmailResponse, error) {
-	res := []EmailResponse{}
+func (client *Client) SendBatchEmailWithTemplate(emails *[]EmailWithTemplate) (*[]EmailResponse, error) {
+	res := &[]EmailResponse{}
+
+	if emails == nil {
+		return res, errors.New("The emails object is not set")
+	}
+
 	var formatEmails map[string]interface{} = map[string]interface{}{
 		"Messages": emails,
 	}

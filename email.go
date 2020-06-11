@@ -75,8 +75,8 @@ type EmailResponse struct {
 }
 
 // SendEmail sends, well, an email.
-func (client *Client) SendEmail(email *Email) (EmailResponse, error) {
-	res := EmailResponse{}
+func (client *Client) SendEmail(email *Email) (*EmailResponse, error) {
+	res := &EmailResponse{}
 
 	if email == nil {
 		return res, errors.New("The email object is not set")
@@ -99,13 +99,19 @@ func (client *Client) SendEmail(email *Email) (EmailResponse, error) {
 // SendEmailBatch sends multiple emails together
 // Note, individual emails in the batch can error, so it would be wise to
 // range over the responses and sniff for errors
-func (client *Client) SendEmailBatch(emails []Email) ([]EmailResponse, error) {
-	res := []EmailResponse{}
+func (client *Client) SendEmailBatch(emails *[]Email) (*[]EmailResponse, error) {
+	res := &[]EmailResponse{}
+
+	if emails == nil {
+		return res, errors.New("The emails object is not set")
+	}
+
 	err := client.doRequest(parameters{
 		Method:    "POST",
 		Path:      "email/batch",
 		Payload:   emails,
 		TokenType: serverToken,
 	}, &res)
+
 	return res, err
 }
