@@ -12,10 +12,14 @@ var (
 	postmarkURL = `https://api.postmarkapp.com`
 )
 
+type HttpClientAPI interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client provides a connection to the Postmark API
 type Client struct {
-	// HTTPClient is &http.Client{} by default
-	HTTPClient *http.Client
+	// HTTPClient
+	HTTPClient HttpClientAPI
 	// Server Token: Used for requests that require server level privileges. This token can be found on the Credentials tab under your Postmark server.
 	ServerToken string
 	// AccountToken: Used for requests that require account level privileges. This token is only accessible by the account owner, and can be found on the Account tab of your Postmark account.
@@ -44,7 +48,7 @@ type parameters struct {
 // NewClient builds a new Client pointer using the provided tokens, a default HTTPClient, and a default API base URL
 // Accepts `Server Token`, and `Account Token` as arguments
 // http://developer.postmarkapp.com/developer-api-overview.html#authentication
-func NewClient(httpClient *http.Client, serverToken string, accountToken string) *Client {
+func NewClient(httpClient HttpClientAPI, serverToken string, accountToken string) *Client {
 	return &Client{
 		HTTPClient:   httpClient,
 		ServerToken:  serverToken,
