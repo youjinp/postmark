@@ -16,6 +16,14 @@ type HttpClientAPI interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type ClientAPI interface {
+	doRequest(opts parameters, dst interface{}) error
+	SendEmail(email *Email) (*EmailResponse, error)
+	SendEmailBatch(emails *[]Email) (*[]EmailResponse, error)
+	SendEmailWithTemplate(email *EmailWithTemplate) (*EmailResponse, error)
+	SendBatchEmailWithTemplate(emails *[]EmailWithTemplate) (*[]EmailResponse, error)
+}
+
 // Client provides a connection to the Postmark API
 type Client struct {
 	// HTTPClient
