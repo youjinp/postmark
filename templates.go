@@ -1,6 +1,9 @@
 package postmark
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // EmailWithTemplate is used to send an email via a template
 type EmailWithTemplate struct {
@@ -13,9 +16,11 @@ type EmailWithTemplate struct {
 	// InlineCss: By default, if the specified template contains an HTMLBody, we will apply the style blocks as inline attributes to the rendered HTML content. You may opt-out of this behavior by passing false for this request field.
 	InlineCCC bool `json:"InlineCss,omitempty"`
 	// From: The sender email address. Must have a registered and confirmed Sender Signature.
-	From string `json:"From,omitempty"`
+	From     string  `json:"From,omitempty"`
+	FromName *string `json:"-"`
 	// To: REQUIRED Recipient email address. Multiple addresses are comma separated. Max 50.
-	To string `json:"To,omitempty"`
+	To     string  `json:"To,omitempty"`
+	ToName *string `json:"-"`
 	// Cc recipient email address. Multiple addresses are comma separated. Max 50.
 	Cc string `json:"Cc,omitempty"`
 	// Bcc recipient email address. Multiple addresses are comma separated. Max 50.
@@ -40,6 +45,15 @@ func (client *Client) SendEmailWithTemplate(email *EmailWithTemplate) (*EmailRes
 		return res, errors.New("The email object is not set")
 	}
 
+	// For email addresses that have names or titles with punctuation, you should quote them as such: "To" : "\"Joe Receiver, jr\" <receiver@example.com>"
+	if email.FromName != nil {
+		email.From = fmt.Sprintf(`"%v" %v`, *email.FromName, email.From)
+	}
+
+	if email.ToName != nil {
+		email.To = fmt.Sprintf(`"%v" %v`, *email.ToName, email.To)
+	}
+
 	err := client.doRequest(parameters{
 		Method:    "POST",
 		Path:      "email/withTemplate",
@@ -57,8 +71,22 @@ func (client *Client) SendBatchEmailWithTemplate(emails *[]EmailWithTemplate) (*
 		return res, errors.New("The emails object is not set")
 	}
 
+	editedEmails := make([]EmailWithTemplate, len(*emails))
+	for i, e := range *emails {
+		// For email addresses that have names or titles with punctuation, you should quote them as such: "To" : "\"Joe Receiver, jr\" <receiver@example.com>"
+		if e.FromName != nil {
+			e.From = fmt.Sprintf(`"%v" %v`, *e.FromName, e.From)
+		}
+
+		if e.ToName != nil {
+			e.To = fmt.Sprintf(`"%v" %v`, *e.ToName, e.To)
+		}
+
+		editedEmails[i] = e
+	}
+
 	var formatEmails map[string]interface{} = map[string]interface{}{
-		"Messages": emails,
+		"Messages": editedEmails,
 	}
 	err := client.doRequest(parameters{
 		Method:    "POST",

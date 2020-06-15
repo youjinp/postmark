@@ -12,9 +12,11 @@ import (
 // Email is exactly what it sounds like
 type Email struct {
 	// From - REQUIRED The sender email address. Must have a registered and confirmed Sender Signature.
-	From string `json:"From"`
+	From     string  `json:"From"`
+	FromName *string `json:"-"`
 	// To - REQUIRED Recipient email address. Multiple addresses are comma separated. Max 50.
-	To string `json:"To"`
+	To     string  `json:"To"`
+	ToName *string `json:"-"`
 	// Cc - recipient email address. Multiple addresses are comma separated. Max 50.
 	Cc string `json:"Cc,omitempty"`
 	// Bcc - recipient email address. Multiple addresses are comma separated. Max 50.
@@ -82,6 +84,15 @@ func (client *Client) SendEmail(email *Email) (*EmailResponse, error) {
 		return res, errors.New("The email object is not set")
 	}
 
+	// For email addresses that have names or titles with punctuation, you should quote them as such: "To" : "\"Joe Receiver, jr\" <receiver@example.com>"
+	if email.FromName != nil {
+		email.From = fmt.Sprintf(`"%v" %v`, *email.FromName, email.From)
+	}
+
+	if email.ToName != nil {
+		email.To = fmt.Sprintf(`"%v" %v`, *email.ToName, email.To)
+	}
+
 	err := client.doRequest(parameters{
 		Method:    "POST",
 		Path:      "email",
@@ -106,10 +117,24 @@ func (client *Client) SendEmailBatch(emails *[]Email) (*[]EmailResponse, error) 
 		return res, errors.New("The emails object is not set")
 	}
 
+	editedEmails := make([]Email, len(*emails))
+	for i, e := range *emails {
+		// For email addresses that have names or titles with punctuation, you should quote them as such: "To" : "\"Joe Receiver, jr\" <receiver@example.com>"
+		if e.FromName != nil {
+			e.From = fmt.Sprintf(`"%v" %v`, *e.FromName, e.From)
+		}
+
+		if e.ToName != nil {
+			e.To = fmt.Sprintf(`"%v" %v`, *e.ToName, e.To)
+		}
+
+		editedEmails[i] = e
+	}
+
 	err := client.doRequest(parameters{
 		Method:    "POST",
 		Path:      "email/batch",
-		Payload:   emails,
+		Payload:   editedEmails,
 		TokenType: serverToken,
 	}, &res)
 
