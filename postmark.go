@@ -17,7 +17,6 @@ type HttpClientAPI interface {
 }
 
 type ClientAPI interface {
-	doRequest(opts parameters, dst interface{}) error
 	SendEmail(email *Email) (*EmailResponse, error)
 	SendEmailBatch(emails *[]Email) (*[]EmailResponse, error)
 	SendEmailWithTemplate(email *EmailWithTemplate) (*EmailResponse, error)
