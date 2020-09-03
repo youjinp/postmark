@@ -69,13 +69,13 @@ func (client *Client) doRequest(opts parameters, dst interface{}) error {
 
 	req, err := http.NewRequest(opts.Method, url, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to create request: %v", err)
 	}
 
 	if opts.Payload != nil {
 		payloadData, err := json.Marshal(opts.Payload)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to marshal payload: %v", err)
 		}
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(payloadData))
 	}
@@ -93,14 +93,19 @@ func (client *Client) doRequest(opts parameters, dst interface{}) error {
 
 	res, err := client.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to perform request: %v", err)
 	}
 
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to read body: %v", err)
 	}
+
 	err = json.Unmarshal(body, dst)
-	return err
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshal body: %v", err)
+	}
+
+	return nil
 }
